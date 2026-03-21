@@ -39,6 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+<<<<<<< HEAD
 
 # Environment variables - keep secret, never commit
 .env.local
+=======
+>>>>>>> d90af0d65e2a0ec23d712133727f190c7e1271d7
