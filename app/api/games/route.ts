@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   const gamesRes = await fetch('https://api.igdb.com/v4/games', {
     method: 'POST',
     headers,
-    body: `fields name, genres, rating, summary, cover; where ${whereClause}; limit 10; sort rating desc;`,
+    body: `fields name, genres, rating, summary, cover, platforms, first_release_date; where ${whereClause}; limit 10; sort rating desc;`,
   });
   const games = await gamesRes.json();
 
