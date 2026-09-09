@@ -539,16 +539,6 @@ export default function GameBoySkeleton() {
                 justifyContent: "center",
               }}
             >
-              {/* Scanlines */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundImage:
-                    "repeating-linear-gradient(0deg,transparent,transparent 2.25px,rgba(0,0,0,0.09) 2.25px,rgba(0,0,0,0.09) 3.38px)",
-                  pointerEvents: "none",
-                }}
-              />
               <span
                 style={{
                   fontFamily: "'Unbounded', sans-serif",
