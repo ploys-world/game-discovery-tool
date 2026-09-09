@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isMoodId, type MoodId } from '@/app/lib/moods';
 
 // Token cache
 let cachedToken: string | null = null;
@@ -20,8 +21,9 @@ async function getAccessToken() {
   return cachedToken;
 }
 
-// Mood to IGDB query mapping
-const moodQueries: Record<string, string> = {
+// Mood to IGDB query mapping, keyed by MoodId. Adding a mood to
+// app/lib/moods.ts without giving it a query here is a compile error.
+const moodQueries: Record<MoodId, string> = {
   cozy:        'rating_count > 20 & keywords = (4725,399,3489) & rating > 75',
   intense:     'rating_count > 20 & genres = (5) & rating > 75',   // genre 5 = shooter
   indie:       'rating_count > 20 & genres = (32) & rating > 80',
@@ -31,7 +33,8 @@ const moodQueries: Record<string, string> = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const mood = searchParams.get('mood') || 'cozy';
+  const requested = searchParams.get('mood');
+  const mood: MoodId = isMoodId(requested) ? requested : 'cozy';
 
   const token = await getAccessToken();
   const headers = {
@@ -40,7 +43,7 @@ export async function GET(request: Request) {
     'Content-Type': 'text/plain',
   };
 
-  const whereClause = moodQueries[mood] || moodQueries.cozy;
+  const whereClause = moodQueries[mood];
 
   // Fetch games
   const gamesRes = await fetch('https://api.igdb.com/v4/games', {

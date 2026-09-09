@@ -2,6 +2,8 @@
 
 import { useState, type CSSProperties } from "react";
 
+import { MOODS } from "@/app/lib/moods";
+
 // ═══════════════════════════════════════════════════════════════
 // VIBE PLAY — background + empty GameBoy Color shell (skeleton)
 // No cartridges, no game data, no filter logic — just the frame.
@@ -18,6 +20,22 @@ export default function GameBoySkeleton() {
   const [dPress, setDPress] = useState<Dir | null>(null);
 
   const vibeC = "#a78bfa"; // default "ALL" vibe color, for glow/accents
+
+  // ── Vibe carousel ────────────────────────────────────────────────────────
+  // Which mood is centred. Left/right on the D-pad moves it, wrapping around.
+  const [moodIndex, setMoodIndex] = useState(0);
+  const stepMood = (delta: number) =>
+    setMoodIndex((i) => (i + delta + MOODS.length) % MOODS.length);
+
+  const scrAccent = "#baff29";   // lime — eyebrow, pill, active dot
+  const scrSub = "#5a5a68";      // counter, chevrons, inactive dots
+  const SCR_U = 8;               // the one spacing unit the screen is built on
+
+  // Temporary tile fills so the carousel visibly moves before real art exists.
+  const moodTint = (i: number) => {
+    const h = (i * 67) % 360;
+    return `linear-gradient(150deg, hsl(${h} 18% 26%), hsl(${h} 20% 12%))`;
+  };
 
   // ── Atomic Purple Translucent shell palette ──────────────────────────────
   const shellBg =
@@ -141,6 +159,10 @@ export default function GameBoySkeleton() {
       onPointerDown={() => setDPress(dir)}
       onPointerUp={() => setDPress(null)}
       onPointerLeave={() => setDPress(null)}
+      onClick={() => {
+        if (dir === "left") stepMood(-1);
+        if (dir === "right") stepMood(1);
+      }}
       aria-label={`D-pad ${dir}`}
       style={{
         position: "absolute",
@@ -205,7 +227,7 @@ export default function GameBoySkeleton() {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,500;1,700&family=Gochi+Hand&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,500;1,700&family=Gochi+Hand&family=Space+Mono:wght@400;700&display=swap');
       `}</style>
 
       {/* Ambient glow */}
@@ -539,27 +561,199 @@ export default function GameBoySkeleton() {
                 justifyContent: "center",
               }}
             >
-              <span
-                style={{
-                  fontFamily: "'Unbounded', sans-serif",
-                  fontSize: "6.75px",
-                  color: "rgba(140,120,220,0.25)",
-                  letterSpacing: "0.14em",
-                }}
-              >
-                SCREEN
-              </span>
+              {/* ── Vibe carousel ────────────────────────────────────────
+                  Everything here is derived from MOODS, so the counter, the
+                  dots and the tiles all follow the list in app/lib/moods.ts. */}
               <div
                 style={{
                   position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: "60%",
-                  height: "38%",
-                  background: "linear-gradient(135deg,rgba(255,255,255,0.05),transparent)",
-                  pointerEvents: "none",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: `${SCR_U}px 12px ${SCR_U}px`,
+                  fontFamily: "'Space Mono', ui-monospace, monospace",
                 }}
-              />
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingBottom: `${SCR_U - 2}px`,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "8px",
+                      letterSpacing: "1.5px",
+                      textTransform: "uppercase",
+                      color: scrAccent,
+                      lineHeight: 1,
+                    }}
+                  >
+                    Pick your vibe
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "8px",
+                      letterSpacing: "1.5px",
+                      color: scrSub,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {moodIndex + 1} / {MOODS.length}
+                  </div>
+                </div>
+
+                {/* stage — flex:1 so it can never overflow the 156px screen */}
+                <div
+                  style={{
+                    position: "relative",
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%,-50%)",
+                      width: "150px",
+                      height: "150px",
+                      borderRadius: "50%",
+                      pointerEvents: "none",
+                      background: `radial-gradient(circle, ${scrAccent}59 0%, transparent 65%)`,
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "12px",
+                      lineHeight: 1,
+                      color: scrSub,
+                      opacity: 0.7,
+                      zIndex: 2,
+                    }}
+                  >
+                    &#8249;
+                  </div>
+
+                  <div
+                    style={{
+                      position: "relative",
+                      zIndex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    {[-1, 0, 1].map((offset) => {
+                      const i =
+                        (moodIndex + offset + MOODS.length) % MOODS.length;
+                      const isCentre = offset === 0;
+                      const size = isCentre ? 84 : 38;
+                      return (
+                        <div
+                          key={MOODS[i].id}
+                          title={MOODS[i].label}
+                          style={{
+                            position: "relative",
+                            width: `${size}px`,
+                            height: `${size}px`,
+                            borderRadius: "14px",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            background: moodTint(i),
+                            opacity: isCentre ? 1 : 0.45,
+                            filter: isCentre ? undefined : "saturate(0.85)",
+                            boxShadow: isCentre
+                              ? "0 12px 24px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.15)"
+                              : "0 6px 14px rgba(0,0,0,0.4)",
+                            transition: "all 0.14s",
+                          }}
+                        >
+                          {/* sheen */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              pointerEvents: "none",
+                              background:
+                                "linear-gradient(155deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 30%, transparent 55%)",
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "12px",
+                      lineHeight: 1,
+                      color: scrSub,
+                      opacity: 0.7,
+                      zIndex: 2,
+                    }}
+                  >
+                    &#8250;
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    alignSelf: "center",
+                    marginTop: `${SCR_U}px`,
+                    padding: "3px 12px",
+                    border: `1px solid ${scrAccent}`,
+                    color: scrAccent,
+                    fontSize: "8px",
+                    letterSpacing: "1.5px",
+                    textTransform: "uppercase",
+                    borderRadius: "999px",
+                    lineHeight: 1,
+                  }}
+                >
+                  {MOODS[moodIndex].label}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "5px",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginTop: `${SCR_U}px`,
+                  }}
+                >
+                  {MOODS.map((m, i) => (
+                    <div
+                      key={m.id}
+                      style={{
+                        width: i === moodIndex ? "12px" : "4px",
+                        height: "4px",
+                        borderRadius: "999px",
+                        background: i === moodIndex ? scrAccent : scrSub,
+                        opacity: i === moodIndex ? 1 : 0.55,
+                        transition: "all 0.14s",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* GAME BOY COLOR logo */}
