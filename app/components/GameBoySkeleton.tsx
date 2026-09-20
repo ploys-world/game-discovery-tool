@@ -27,6 +27,67 @@ export default function GameBoySkeleton() {
   const stepMood = (delta: number) =>
     setMoodIndex((i) => (i + delta + MOODS.length) % MOODS.length);
 
+  // ── Result screen ────────────────────────────────────────────────────────
+  // A confirms the centred vibe, fetching a game for it. Start rerolls by
+  // hitting the API again for a fresh pick; B drops the pick and returns to
+  // the carousel.
+  type ScreenView = "carousel" | "loading" | "result" | "error";
+  type Game = {
+    id: number;
+    name: string;
+    summary?: string;
+    coverUrl?: string | null;
+  };
+
+  const [screen, setScreen] = useState<ScreenView>("carousel");
+  const [pickedGame, setPickedGame] = useState<Game | null>(null);
+  // Every game already shown for the current vibe, so reroll doesn't repeat
+  // one until the whole (deterministic, rating-sorted) result set is used up.
+  const [seenIds, setSeenIds] = useState<Set<number>>(new Set());
+
+  const pickRandomGame = (pool: Game[], excludeIds: Set<number>) => {
+    if (pool.length === 0) return null;
+    const unseen = pool.filter((g) => !excludeIds.has(g.id));
+    const candidates = unseen.length > 0 ? unseen : pool;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  };
+
+  const fetchAndPick = async (excludeIds: Set<number>) => {
+    setScreen("loading");
+    try {
+      const res = await fetch(`/api/games?mood=${MOODS[moodIndex].id}`);
+      const games: Game[] = await res.json();
+      if (!Array.isArray(games) || games.length === 0) {
+        setScreen("error");
+        return;
+      }
+      const picked = pickRandomGame(games, excludeIds);
+      setPickedGame(picked);
+      setSeenIds(picked ? new Set(excludeIds).add(picked.id) : excludeIds);
+      setScreen("result");
+    } catch {
+      setScreen("error");
+    }
+  };
+
+  const confirmVibe = () => {
+    setSeenIds(new Set());
+    fetchAndPick(new Set());
+  };
+
+  const reroll = () => fetchAndPick(seenIds);
+
+  const backToVibes = () => {
+    setScreen("carousel");
+    setPickedGame(null);
+    setSeenIds(new Set());
+  };
+
+  const viewGame = () => {
+    // Placeholder until the destination (IGDB page vs. store search) is decided.
+    console.log("view game", pickedGame);
+  };
+
   const scrAccent = "#baff29";   // lime — eyebrow, pill, active dot
   const scrSub = "#5a5a68";      // counter, chevrons, inactive dots
   const SCR_U = 8;               // the one spacing unit the screen is built on
@@ -160,6 +221,7 @@ export default function GameBoySkeleton() {
       onPointerUp={() => setDPress(null)}
       onPointerLeave={() => setDPress(null)}
       onClick={() => {
+        if (screen !== "carousel") return;
         if (dir === "left") stepMood(-1);
         if (dir === "right") stepMood(1);
       }}
@@ -574,6 +636,8 @@ export default function GameBoySkeleton() {
                   fontFamily: "'Space Mono', ui-monospace, monospace",
                 }}
               >
+              {screen === "carousel" && (
+                <>
                 <div
                   style={{
                     display: "flex",
@@ -753,6 +817,192 @@ export default function GameBoySkeleton() {
                     />
                   ))}
                 </div>
+                </>
+              )}
+
+              {screen === "loading" && (
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      letterSpacing: "2px",
+                      textTransform: "uppercase",
+                      color: scrSub,
+                    }}
+                  >
+                    Loading&hellip;
+                  </div>
+                </div>
+              )}
+
+              {screen === "error" && (
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: `${SCR_U}px`,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      letterSpacing: "1px",
+                      color: scrSub,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Couldn&rsquo;t load games.
+                    <br />
+                    Press B to try another vibe.
+                  </div>
+                </div>
+              )}
+
+              {screen === "result" && pickedGame && (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      paddingBottom: `${SCR_U - 2}px`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "8px",
+                        letterSpacing: "1.5px",
+                        textTransform: "uppercase",
+                        color: scrAccent,
+                        lineHeight: 1,
+                      }}
+                    >
+                      Vibe: {MOODS[moodIndex].label}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "8px",
+                        letterSpacing: "1.5px",
+                        color: scrSub,
+                        lineHeight: 1,
+                      }}
+                    >
+                      Today&rsquo;s pick
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      flex: 1,
+                      minHeight: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "64px",
+                        height: "64px",
+                        flexShrink: 0,
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        background: pickedGame.coverUrl
+                          ? `url(${pickedGame.coverUrl}) center/cover`
+                          : moodTint(moodIndex),
+                        boxShadow:
+                          "0 6px 14px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(255,255,255,0.12)",
+                      }}
+                    />
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                        minWidth: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "'Unbounded', sans-serif",
+                          fontWeight: 800,
+                          fontSize: "9px",
+                          color: "#eeeef8",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {pickedGame.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "6.5px",
+                          color: scrSub,
+                          lineHeight: 1.4,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {pickedGame.summary ?? ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "6px",
+                      justifyContent: "center",
+                      marginTop: `${SCR_U}px`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "3px 10px",
+                        border: `1px solid ${scrSub}`,
+                        color: scrSub,
+                        fontSize: "7px",
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        borderRadius: "999px",
+                        lineHeight: 1,
+                      }}
+                    >
+                      &#8635; Reroll (Start)
+                    </div>
+                    <div
+                      style={{
+                        padding: "3px 10px",
+                        background: scrAccent,
+                        color: "#12210a",
+                        fontSize: "7px",
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        borderRadius: "999px",
+                        lineHeight: 1,
+                        fontWeight: 700,
+                      }}
+                    >
+                      View game (A)
+                    </div>
+                  </div>
+                </>
+              )}
               </div>
             </div>
 
@@ -968,6 +1218,9 @@ export default function GameBoySkeleton() {
             onPointerDown={() => setBPress(true)}
             onPointerUp={() => setBPress(false)}
             onPointerLeave={() => setBPress(false)}
+            onClick={() => {
+              if (screen === "result" || screen === "error") backToVibes();
+            }}
             style={{
               position: "absolute",
               left: "174.38px",
@@ -1003,6 +1256,10 @@ export default function GameBoySkeleton() {
             onPointerDown={() => setAPress(true)}
             onPointerUp={() => setAPress(false)}
             onPointerLeave={() => setAPress(false)}
+            onClick={() => {
+              if (screen === "carousel") confirmVibe();
+              if (screen === "result") viewGame();
+            }}
             style={{
               position: "absolute",
               left: "213.75px",
@@ -1077,6 +1334,9 @@ export default function GameBoySkeleton() {
             onPointerDown={() => setStPress(true)}
             onPointerUp={() => setStPress(false)}
             onPointerLeave={() => setStPress(false)}
+            onClick={() => {
+              if (screen === "result") reroll();
+            }}
             style={{
               position: "absolute",
               left: "150.75px",
