@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import { MOODS } from "@/app/lib/moods";
 
@@ -44,6 +44,13 @@ export default function GameBoySkeleton() {
   // Every game already shown for the current vibe, so reroll doesn't repeat
   // one until the whole (deterministic, rating-sorted) result set is used up.
   const [seenIds, setSeenIds] = useState<Set<number>>(new Set());
+
+  // Root layout metadata is cached by next-server and often will not
+  // update the browser tab until `next dev` is restarted. Set it here
+  // so Fast Refresh of this client component updates the tab immediately.
+  useEffect(() => {
+    document.title = "Vibe Game Match";
+  }, []);
 
   const pickRandomGame = (pool: Game[], excludeIds: Set<number>) => {
     if (pool.length === 0) return null;
@@ -342,7 +349,7 @@ export default function GameBoySkeleton() {
             lineHeight: 1,
           }}
         >
-          <span style={{ color: vibeC }}>VIBE</span>PLAY
+          <span style={{ color: vibeC }}>VIBE</span> GAME MATCH
         </h1>
       </div>
 
