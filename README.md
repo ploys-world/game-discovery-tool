@@ -12,9 +12,9 @@ Instead of browsing endless lists, pick a mood and get a curated set of highly r
 |------|-------------|
 | 🌿 Cozy | Relaxing, feel-good games |
 | 🔥 Intense | High-octane shooters and action |
-| 🎨 Indie | Highly-rated indie gems |
-| 👥 Multiplayer | Co-op and competitive games |
+| 👻 Spooky | Horror games built on dread and suspense |
 | 📖 Story | Narrative-driven RPGs |
+| 👥 Social | Co-op and competitive games |
 
 ## Tech Stack
 
