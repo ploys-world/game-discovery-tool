@@ -31,12 +31,16 @@ export default function GameBoySkeleton() {
   // A confirms the centred vibe, fetching a game for it. Start rerolls by
   // hitting the API again for a fresh pick; B drops the pick and returns to
   // the carousel.
-  type ScreenView = "carousel" | "loading" | "result" | "error";
+  type ScreenView = "carousel" | "loading" | "result" | "detail" | "error";
   type Game = {
     id: number;
     name: string;
     summary?: string;
     coverUrl?: string | null;
+    rating?: number;
+    year?: number | null;
+    developer?: string | null;
+    platformNames?: string[];
   };
 
   const [screen, setScreen] = useState<ScreenView>("carousel");
@@ -90,10 +94,12 @@ export default function GameBoySkeleton() {
     setSeenIds(new Set());
   };
 
+  // A on the result screen opens Game Info; B there returns to the same pick.
   const viewGame = () => {
-    // Placeholder until the destination (IGDB page vs. store search) is decided.
-    console.log("view game", pickedGame);
+    if (pickedGame) setScreen("detail");
   };
+
+  const backToResult = () => setScreen("result");
 
   const scrAccent = "#baff29";   // lime — eyebrow, pill, active dot
   const scrSub = "#5a5a68";      // counter, chevrons, inactive dots
@@ -1029,6 +1035,161 @@ export default function GameBoySkeleton() {
                   </div>
                 </>
               )}
+
+              {screen === "detail" && pickedGame && (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      paddingBottom: `${SCR_U}px`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "8px",
+                        letterSpacing: "1.5px",
+                        textTransform: "uppercase",
+                        color: scrAccent,
+                        lineHeight: 1,
+                      }}
+                    >
+                      Game info
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "8px",
+                        letterSpacing: "1.5px",
+                        color: scrSub,
+                        lineHeight: 1,
+                      }}
+                    >
+                      Vibe: {MOODS[moodIndex].label}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: `${SCR_U}px`,
+                      paddingBottom: `${SCR_U + 1}px`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        flexShrink: 0,
+                        borderRadius: "5px",
+                        background: pickedGame.coverUrl
+                          ? `url(${pickedGame.coverUrl}) center/cover`
+                          : moodTint(moodIndex),
+                        boxShadow: "0 0 0 1.5px rgba(255,255,255,0.12)",
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontFamily: "'Unbounded', sans-serif",
+                        fontWeight: 800,
+                        fontSize: "11px",
+                        color: "#eeeef8",
+                        lineHeight: 1.2,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {pickedGame.name}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "7px 10px",
+                    }}
+                  >
+                    {[
+                      {
+                        label: "Rating",
+                        value:
+                          pickedGame.rating != null
+                            ? `★ ${Math.round(pickedGame.rating)}`
+                            : "—",
+                      },
+                      { label: "Released", value: pickedGame.year ?? "—" },
+                      { label: "Developer", value: pickedGame.developer ?? "—" },
+                      {
+                        label: "Play on",
+                        value: pickedGame.platformNames?.length
+                          ? pickedGame.platformNames.slice(0, 3).join(" · ")
+                          : "—",
+                      },
+                    ].map((stat) => (
+                      <div
+                        key={stat.label}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2.5px",
+                          minWidth: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "6px",
+                            letterSpacing: "1px",
+                            textTransform: "uppercase",
+                            color: "#8a8a9a",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {stat.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "8.5px",
+                            color: "#eeeef8",
+                            lineHeight: 1.1,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {stat.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      marginTop: "auto",
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "3px 10px",
+                        border: "1px solid #8a8a9a",
+                        color: "#b8b8c8",
+                        fontSize: "7px",
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        borderRadius: "999px",
+                        lineHeight: 1,
+                      }}
+                    >
+                      &#9666; Back (B)
+                    </div>
+                  </div>
+                </>
+              )}
               </div>
             </div>
 
@@ -1246,6 +1407,7 @@ export default function GameBoySkeleton() {
             onPointerLeave={() => setBPress(false)}
             onClick={() => {
               if (screen === "result" || screen === "error") backToVibes();
+              if (screen === "detail") backToResult();
             }}
             style={{
               position: "absolute",

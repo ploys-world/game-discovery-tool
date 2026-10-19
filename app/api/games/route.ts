@@ -51,9 +51,15 @@ export async function GET(request: Request) {
   const gamesRes = await fetch('https://api.igdb.com/v4/games', {
     method: 'POST',
     headers,
-    body: `fields name, genres, rating, summary, cover, platforms, first_release_date; where ${whereClause}; limit 10; sort rating desc;`,
+    // Expanded fields return names instead of IDs, so the detail screen
+    // needs no extra lookups: rating, first_release_date, involved_companies,
+    // platforms.
+    body: `fields name, rating, summary, cover, first_release_date, platforms.abbreviation, platforms.name, involved_companies.developer, involved_companies.company.name; where ${whereClause}; limit 10; sort rating desc;`,
   });
   const games = await gamesRes.json();
+  if (!Array.isArray(games)) {
+    return NextResponse.json([]);
+  }
 
   // Fetch covers
   const coverIds = games.map((g: any) => g.cover).filter(Boolean);
@@ -74,10 +80,21 @@ export async function GET(request: Request) {
     );
   }
 
-  // Merge cover URLs into games
+  // Merge cover URLs and flatten the Game Info fields
   const enriched = games.map((g: any) => ({
-    ...g,
+    id: g.id,
+    name: g.name,
+    summary: g.summary,
+    rating: g.rating,
     coverUrl: g.cover ? coverMap[g.cover] : null,
+    year: g.first_release_date
+      ? new Date(g.first_release_date * 1000).getUTCFullYear()
+      : null,
+    developer:
+      g.involved_companies?.find((c: any) => c.developer)?.company?.name ?? null,
+    platformNames: (g.platforms ?? []).map(
+      (p: any) => p.abbreviation ?? p.name
+    ),
   }));
 
   return NextResponse.json(enriched);
