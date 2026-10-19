@@ -24,11 +24,13 @@ async function getAccessToken() {
 // Mood to IGDB query mapping, keyed by MoodId. Adding a mood to
 // app/lib/moods.ts without giving it a query here is a compile error.
 const moodQueries: Record<MoodId, string> = {
-  cozy:        'rating_count > 20 & keywords = (4725,399,3489) & rating > 75',
-  intense:     'rating_count > 20 & genres = (5) & rating > 75',   // genre 5 = shooter
-  indie:       'rating_count > 20 & genres = (32) & rating > 80',
-  multiplayer: 'rating_count > 20 & game_modes = (2,3) & rating > 75',
-  story:       'rating_count > 20 & genres = (12) & rating > 85',
+  cozy:
+    "rating_count > 20 & keywords = (1387,1430,2084,17495,19396,23931,24685,45515,46955,47482,57715) & rating > 75",
+  intense: "rating_count > 20 & genres = (4,5,10,25) & rating > 75",
+  spooky: "rating_count > 20 & themes = (19,20,21,43) & rating > 75",
+  story:
+    "rating_count > 20 & (genres = (2,12,31,34) | themes = (17,18,22,31,43)) & themes != 42 & rating > 75",
+  social: "rating_count > 20 & game_modes = (2,3,5,6) & rating > 75",
 };
 
 export async function GET(request: Request) {

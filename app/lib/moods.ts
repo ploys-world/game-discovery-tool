@@ -6,14 +6,15 @@
  * here updates the counter, the dots and the carousel automatically, and the
  * route stops compiling until the new mood is given a query.
  *
- * Client-safe: ids and labels only. The IGDB query strings stay in the route.
+ * Client-safe: ids, labels and tile emoji only. The IGDB query strings stay
+ * in the route.
  */
 export const MOODS = [
-  { id: "cozy", label: "Cozy" },
-  { id: "intense", label: "Intense" },
-  { id: "indie", label: "Indie" },
-  { id: "multiplayer", label: "Multiplayer" },
-  { id: "story", label: "Story" },
+  { id: "cozy", label: "Cozy", emoji: "☕️" },
+  { id: "intense", label: "Intense", emoji: "⚔️" },
+  { id: "spooky", label: "Spooky", emoji: "🩻" },
+  { id: "story", label: "Story", emoji: "📖" },
+  { id: "social", label: "Social", emoji: "👥" },
 ] as const;
 
 export type MoodId = (typeof MOODS)[number]["id"];

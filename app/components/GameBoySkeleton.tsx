@@ -99,8 +99,12 @@ export default function GameBoySkeleton() {
   const scrSub = "#5a5a68";      // counter, chevrons, inactive dots
   const SCR_U = 8;               // the one spacing unit the screen is built on
 
-  // Temporary tile fills so the carousel visibly moves before real art exists.
+  // Soft tile fills behind each vibe emoji. Cozy skips the index-0 red
+  // hue and uses a warm cocoa instead.
   const moodTint = (i: number) => {
+    if (MOODS[i].id === "cozy") {
+      return "linear-gradient(150deg, hsl(24 28% 24%), hsl(20 30% 11%))";
+    }
     const h = (i * 67) % 360;
     return `linear-gradient(150deg, hsl(${h} 18% 26%), hsl(${h} 20% 12%))`;
   };
@@ -743,6 +747,9 @@ export default function GameBoySkeleton() {
                             borderRadius: "14px",
                             overflow: "hidden",
                             flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             background: moodTint(i),
                             opacity: isCentre ? 1 : 0.45,
                             filter: isCentre ? undefined : "saturate(0.85)",
@@ -752,6 +759,18 @@ export default function GameBoySkeleton() {
                             transition: "all 0.14s",
                           }}
                         >
+                          <span
+                            aria-hidden
+                            style={{
+                              position: "relative",
+                              zIndex: 1,
+                              fontSize: isCentre ? "42px" : "20px",
+                              lineHeight: 1,
+                              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.45))",
+                            }}
+                          >
+                            {MOODS[i].emoji}
+                          </span>
                           {/* sheen */}
                           <div
                             style={{
